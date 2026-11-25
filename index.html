@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in – Corvid Account</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--ink:#1b1f24;--mute:#5b6470;--line:#d4d8de;--blue:#2457d6;--blue2:#1c46b0;--red:#c62828;--green:#1e8e3e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 14px}
+.card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:36px 36px 30px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.logo{display:flex;align-items:center;gap:9px;font-weight:600;font-size:17px;margin-bottom:22px}
+h1{font-size:23px;font-weight:600;margin:0 0 6px}
+.sub{color:var(--mute);margin:0 0 20px}
+.user{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:20px;padding:3px 12px 3px 4px;font-size:14px;margin-bottom:16px}
+.user i{width:22px;height:22px;border-radius:50%;background:#dfe6f7;display:grid;place-items:center;font-style:normal;font-size:12px;color:var(--blue);font-weight:700}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 5px}
+input{width:100%;font:16px inherit;font-family:inherit;padding:11px 12px;border:1px solid #9aa3ad;border-radius:6px;background:#fff;color:var(--ink)}
+input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(36,87,214,.18)}
+input.code{letter-spacing:.35em;font-size:20px;text-align:center}
+input.bad{border-color:var(--red)}
+.err{color:var(--red);font-size:13px;min-height:20px;margin-top:6px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+button{font:600 15px inherit;font-family:inherit;min-height:42px;padding:9px 22px;border-radius:6px;border:0;background:var(--blue);color:#fff;cursor:pointer}
+button:hover{background:var(--blue2)}button:disabled{opacity:.6;cursor:default}
+.link{background:none;color:var(--blue);padding:0;min-height:0;font-weight:500;font-size:14px}
+.link:hover{background:none;text-decoration:underline}.link:disabled{color:var(--mute);text-decoration:none}
+.icon{width:52px;height:52px;border-radius:50%;background:#e8eefc;display:grid;place-items:center;margin-bottom:14px}
+.prog{margin:-6px 0 20px;display:none}
+.prog.show{display:block}
+.prog .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-bottom:5px}
+.prog .track{height:6px;background:#e5e8ec;border-radius:3px;overflow:hidden}
+.prog .fill{height:100%;width:0;background:var(--blue);border-radius:3px;transition:width .6s ease}
+.prog.grow .lbl b{color:var(--red);transition:color .3s}
+.spin{width:34px;height:34px;border:3px solid #dfe5f2;border-top-color:var(--blue);border-radius:50%;animation:r .8s linear infinite;margin:26px auto 14px}
+@keyframes r{to{transform:rotate(360deg)}}
+.center{text-align:center}
+canvas{display:block;width:100%;height:80px;border:1px solid var(--line);border-radius:6px;background:#f7f8fa}
+.big{font-size:44px;font-weight:700;letter-spacing:.05em;text-align:center;margin:8px 0}
+.foot{margin-top:22px;font-size:12px;color:var(--mute);display:flex;gap:16px}
+.demo{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#222;color:#ffd54f;font:13px monospace;padding:8px 14px;border-radius:8px;opacity:.92;max-width:94vw}
+.ok{width:60px;height:60px;border-radius:50%;background:#e6f4ea;display:grid;place-items:center;margin:4px auto 16px}
+@media(max-width:480px){.card{padding:26px 20px;border:0;box-shadow:none;background:transparent}body{background:#fff;justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="6" fill="#2457d6"/><path d="M8 17c0-4.5 2.6-8 6.5-8 1.6 0 2.9.5 3.5 1.2l-1.4 1.6c-.5-.4-1.2-.7-2-.7-2.4 0-4 2.3-4 5.6 0 .5 0 .9.1 1.3H8.1C8 17.7 8 17.3 8 17z" fill="#fff"/><circle cx="17" cy="16" r="1.6" fill="#fff"/></svg>Corvid</div>
+  <div class="prog" id="prog"><div class="lbl"><span>Verification</span><b id="plbl"></b></div><div class="track"><div class="fill" id="pfill"></div></div></div>
+  <div id="view"></div>
+</div>
+<div class="foot"><span>Terms of use</span><span>Privacy</span><span>© 2026 Corvid</span></div>
+
+<script>
+/* ======================= CONFIG — edit this ======================= */
+const CFG={
+  username:'oleksii',                 // what you tell your friends
+  password:'Sunflower!2026',
+  emailHint:'ol••••••••••@outlook.com', // shown on screen (masked, like real sites)
+  phoneHint:'•••• •• 42',             // shown on screen
+  phoneLast4:'',                      // real last 4 digits of your phone, for the "confirm phone" step ('' = accept any 4 digits)
+  securityQuestion:'What was the name of your first pet?',
+  securityAnswer:'',                  // '' = accept any answer
+  // EmailJS (emailjs.com, free). Template should use {{code}} and {{reason}} and send TO your address.
+  emailjs:{serviceId:'service_0s3mq2w',templateId:'template_taotxsf',publicKey:'sG1it_bwMrzrUnvE1'},
+  // ntfy (ntfy.sh, free app). Subscribe to this exact topic in the app.
+  ntfyTopic:'oleksii-2fa-72ddc57e1e52',
+  // Add this key to Google/Microsoft Authenticator ("Enter a setup key", time-based)
+  totpSecret:'EB2W2RPLRWJPYFFCWHH6NBNYJJV475GM',
+  backupCodes:['11366300','86375156','18477052','65856684','35028171','73210228','33391146','61651240'],
+  demo:false                          // true = also show every code on screen (for testing)
+};
+/* ================================================================== */
+{
+const $=s=>document.querySelector(s),view=$('#view');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rnd=n=>Math.floor(Math.random()*n);
+const code6=()=>String(rnd(1e6)).padStart(6,'0');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let t0=0,done=0,total=5,usedBackup=new Set();
+
+/* ---------- demo banner ---------- */
+const emailOn=()=>CFG.emailjs.serviceId&&CFG.emailjs.templateId&&CFG.emailjs.publicKey;
+let demoEl;
+const demo=t=>{if(!CFG.demo&&(t.startsWith('[email]')?emailOn():t.startsWith('[phone]')?CFG.ntfyTopic:true))return;if(!demoEl){demoEl=document.createElement('div');demoEl.className='demo';document.body.appendChild(demoEl)}demoEl.textContent='TEST MODE '+t};
+
+/* ---------- senders ---------- */
+async function sendEmail(code,reason){
+  demo('[email] code '+code);
+  if(!emailOn())return;
+  try{await fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({service_id:CFG.emailjs.serviceId,template_id:CFG.emailjs.templateId,user_id:CFG.emailjs.publicKey,template_params:{code,reason}})})}catch(e){console.warn('email failed',e)}
+}
+async function sendPhone(title,msg){
+  demo('[phone] '+msg);
+  if(!CFG.ntfyTopic)return;
+  try{await fetch('https://ntfy.sh/'+encodeURIComponent(CFG.ntfyTopic),{method:'POST',body:msg,headers:{Title:title,Priority:'high',Tags:'lock'}})}catch(e){console.warn('push failed',e)}
+}
+
+/* ---------- TOTP ---------- */
+const b32=s=>{const a='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='';for(const c of s.replace(/=+$/,'').toUpperCase())bits+=a.indexOf(c).toString(2).padStart(5,'0');const out=new Uint8Array(bits.length>>3);for(let i=0;i<out.length;i++)out[i]=parseInt(bits.substr(i*8,8),2);return out};
+async function totp(step){const key=await crypto.subtle.importKey('raw',b32(CFG.totpSecret),{name:'HMAC',hash:'SHA-1'},false,['sign']);const buf=new ArrayBuffer(8),dv=new DataView(buf);dv.setUint32(0,Math.floor(step/2**32));dv.setUint32(4,step>>>0);const h=new Uint8Array(await crypto.subtle.sign('HMAC',key,buf)),o=h[19]&15;const n=((h[o]&127)<<24|h[o+1]<<16|h[o+2]<<8|h[o+3])%1e6;return String(n).padStart(6,'0')}
+async function totpOk(v){const s=Math.floor(Date.now()/30000);for(const d of[-1,0,1])if(await totp(s+d)===v)return true;return false}
+
+/* ---------- progress bar ---------- */
+function prog(){const p=$('#prog');if(done<2)return p.classList.remove('show');p.classList.add('show');$('#plbl').textContent=`Step ${done+1} of ${total}`;$('#pfill').style.width=(done/total*100)+'%'}
+async function extend(newTotal){const p=$('#prog');$('#pfill').style.width='100%';$('#plbl').textContent=`Step ${total} of ${total}`;await sleep(900);total=newTotal;p.classList.add('grow');prog();await sleep(1400);p.classList.remove('grow')}
+
+/* ---------- generic screens ---------- */
+const head=(icon,t,s)=>`<div class="icon">${icon}</div><h1>${t}</h1><p class="sub">${s}</p>`;
+const I={
+ mail:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2457d6" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+ phone:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2457d6" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+ app:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2457d6" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+ shield:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2457d6" stroke-width="2"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg>',
+ key:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2457d6" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9m-4 4 3 3"/></svg>',
+ lock:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2457d6" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+};
+const userChip=()=>`<div class="user"><i>${esc(CFG.username[0].toUpperCase())}</i>${esc(CFG.username)}</div>`;
+
+/* A step = render html + check(value) => true/false/'msg' ; optional onShow(resend) */
+function stepScreen({icon,title,sub,label,cls='code',max=6,type='text',mode='numeric',check,send,extra=''}){
+  return new Promise(res=>{
+    view.innerHTML=userChip()+head(icon,title,sub)+extra+`<label for="v">${label}</label><input id="v" class="${cls}" type="${type}" inputmode="${mode}" maxlength="${max}" autocomplete="one-time-code"><div class="err" id="err"></div><div class="row">${send?'<button class="link" id="rs">Resend code</button>':'<span></span>'}<button id="go">Verify</button></div>`;
+    const v=$('#v'),err=$('#err'),go=$('#go');v.focus();
+    let cd=0;const rs=$('#rs');
+    const doSend=async()=>{await send();cd=30;tick()};
+    const tick=()=>{if(!rs||!rs.isConnected)return;rs.disabled=cd>0;rs.textContent=cd>0?`Resend code (${cd}s)`:'Resend code';if(cd-->0)setTimeout(tick,1000)};
+    if(rs)rs.onclick=doSend;if(send)doSend();
+    const sub_=async()=>{const val=v.value.trim();if(!val){err.textContent='Please enter a value.';return}go.disabled=true;go.textContent='Verifying…';await sleep(600+rnd(700));
+      const r=await check(val);if(r===true){res()}else{go.disabled=false;go.textContent='Verify';v.classList.add('bad');err.textContent=typeof r==='string'?r:'That code is incorrect. Please try again.';v.select()}};
+    go.onclick=sub_;v.onkeydown=e=>{v.classList.remove('bad');if(e.key==='Enter')sub_()};
+  });
+}
+
+/* ---------- challenge types ---------- */
+const C={
+ email:(reason='Verify your identity')=>{let c;return stepScreen({icon:I.mail,title:reason==='new'?'Confirm new sign-in':'Check your email',
+   sub:reason==='new'?`We noticed a sign-in from a new device. We sent a security code to <b>${esc(CFG.emailHint)}</b>.`:`We sent a 6-digit code to <b>${esc(CFG.emailHint)}</b>. It may take a minute to arrive.`,
+   label:'Enter code',send:()=>{c=code6();return sendEmail(c,reason==='new'?'New device sign-in':'Sign-in verification')},check:v=>v===c})},
+ phone:()=>{let c;return stepScreen({icon:I.phone,title:'Verify your phone',sub:`We sent a verification code to your phone ending in <b>${esc(CFG.phoneHint)}</b>.`,
+   label:'Enter code',send:()=>{c=code6();return sendPhone('Corvid security code',`Your Corvid verification code is ${c}. Don't share it with anyone.`)},check:v=>v===c})},
+ app:()=>stepScreen({icon:I.app,title:'Authenticator app',sub:'Open your authenticator app and enter the current 6-digit code for <b>Corvid</b>.',label:'Enter code',check:totpOk}),
+ number:()=>{let c;return stepScreen({icon:I.phone,title:'Approve sign-in request',sub:'We sent a sign-in request to your phone. Enter the number shown in the notification to approve it.',
+   label:'Number from notification',max:2,send:()=>{c=String(10+rnd(90));return sendPhone('Sign-in request','Are you trying to sign in? Enter '+c+' on the sign-in screen to approve. If this is not you, ignore this message.')},check:v=>v===c,cls:'code'})},
+ captcha:()=>{let c;const draw=()=>{const cv=$('#cv');if(!cv)return;const x=cv.getContext('2d'),W=cv.width=cv.clientWidth*2,H=cv.height=160;const ch='ABCDEFGHJKMNPQRSTUVWXYZ23456789';c=Array.from({length:6},()=>ch[rnd(ch.length)]).join('');
+   x.fillStyle='#f2f3f5';x.fillRect(0,0,W,H);for(let i=0;i<9;i++){x.strokeStyle=`hsl(${rnd(360)},30%,${50+rnd(30)}%)`;x.lineWidth=1+rnd(3);x.beginPath();x.moveTo(rnd(W),rnd(H));x.bezierCurveTo(rnd(W),rnd(H),rnd(W),rnd(H),rnd(W),rnd(H));x.stroke()}
+   [...c].forEach((l,i)=>{x.save();x.translate(W*(.12+i*.135),H*.62+rnd(20)-10);x.rotate((rnd(50)-25)*Math.PI/180);x.font=`${70+rnd(18)}px Georgia,serif`;x.fillStyle=`hsl(${rnd(360)},45%,28%)`;x.fillText(l,0,0);x.restore()});
+   for(let i=0;i<300;i++){x.fillStyle='rgba(0,0,0,.25)';x.fillRect(rnd(W),rnd(H),2,2)}};
+   const p=stepScreen({icon:I.shield,title:'Security check',sub:'To protect your account, please type the characters shown below.',label:'Characters',cls:'',max:6,mode:'text',
+    extra:'<canvas id="cv"></canvas><button class="link" id="nw" style="margin-top:6px">Try a different image</button>',check:v=>v.toUpperCase()===c?true:(draw(),'The characters didn’t match. Try again with the new image.')});
+   draw();$('#nw').onclick=draw;return p},
+ question:()=>stepScreen({icon:I.lock,title:'Security question',sub:'Answer the security question you set up for this account.',label:esc(CFG.securityQuestion),cls:'',max:60,mode:'text',
+   check:v=>!CFG.securityAnswer||v.toLowerCase()===CFG.securityAnswer.toLowerCase()||'That answer doesn’t match our records.'}),
+ backup:()=>stepScreen({icon:I.key,title:'Enter a backup code',sub:'Enter one of the 8-digit backup codes you saved when you set up two-step verification. Each code can be used once.',label:'Backup code',max:8,
+   check:v=>{if(usedBackup.has(v))return'This backup code has already been used.';if(CFG.backupCodes.includes(v)){usedBackup.add(v);return true}return false}}),
+ password:()=>stepScreen({icon:I.lock,title:'Confirm your password',sub:'For your security, please re-enter your password to continue.',label:'Password',type:'password',cls:'',max:100,mode:'text',check:v=>v===CFG.password||'Incorrect password.'}),
+ last4:()=>stepScreen({icon:I.phone,title:'Confirm your phone number',sub:`Enter the last 4 digits of the phone number ending in <b>${esc(CFG.phoneHint)}</b>.`,label:'Last 4 digits',max:4,
+   check:v=>/^\d{4}$/.test(v)&&(!CFG.phoneLast4||v===CFG.phoneLast4)||'That number doesn’t match.'})
+};
+
+/* 20 steps. Bar appears on step 3 (out of 5), extends to 10 after step 5, to 20 after step 10. */
+const PLAN=[()=>C.email(),C.app,C.phone,C.captcha,C.number,
+            ()=>C.email('new'),C.question,C.phone,C.backup,C.password,
+            C.captcha,C.app,()=>C.email(),C.last4,C.number,
+            C.phone,C.backup,C.captcha,C.app,()=>C.email('new')];
+
+async function signingIn(){view.innerHTML=`<div class="spin"></div><p class="center sub">Signing you in…</p>`;await sleep(1300+rnd(900))}
+
+async function run(){
+  for(let i=0;i<PLAN.length;i++){
+    prog();
+    await PLAN[i]();
+    done++;
+    if(done===5)await extend(10);
+    else if(done===10)await extend(20);
+    else if(done<20){$('#pfill').style.width=(done/total*100)+'%'}
+    if(done<20)await signingIn();
+  }
+  $('#pfill').style.width='100%';$('#plbl').textContent='Complete';
+  const s=Math.round((Date.now()-t0)/1000),m=Math.floor(s/60);
+  view.innerHTML=`<div class="ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1e8e3e" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg></div><h1 class="center">Well done!</h1><p class="center sub" style="font-size:17px">It took you <b>${m?m+' min ':''}${s%60} s</b>.</p>`;
+}
+
+/* ---------- login ---------- */
+function login(){
+  view.innerHTML=`<h1>Sign in</h1><p class="sub">Use your Corvid account</p><label for="u">Username or email</label><input id="u" autocomplete="off"><label for="p">Password</label><input id="p" type="password"><div class="err" id="err"></div><div class="row"><button class="link" id="fp">Forgot password?</button><button id="go">Sign in</button></div>`;
+  $('#u').focus();
+  const go=async()=>{const b=$('#go');b.disabled=true;b.textContent='Signing in…';await sleep(700);
+    if($('#u').value.trim().toLowerCase()===CFG.username.toLowerCase()&&$('#p').value===CFG.password){t0=Date.now();await signingIn();run()}
+    else{b.disabled=false;b.textContent='Sign in';$('#err').textContent='Your username or password is incorrect.'}};
+  $('#go').onclick=go;$('#p').onkeydown=e=>{if(e.key==='Enter')go()};
+  $('#fp').onclick=()=>{$('#err').textContent='Password reset is temporarily unavailable.'};
+}
+login();
+}
+</script>
+</body>
+</html>
